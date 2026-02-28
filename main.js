@@ -25,8 +25,9 @@ async function logFileInfo() {
     const file    = runtime.load(new Uint8Array(buf));
 
     // Artboard names
+    const abCount = typeof file.artboardCount === 'function' ? file.artboardCount() : file.artboardCount;
     const artboardNames = Array.from(
-      { length: file.artboardCount() },
+      { length: abCount },
       (_, i) => file.artboardByIndex(i).name
     );
     console.log('%c[Rive] Artboards:', 'color:#7c6dfa;font-weight:bold', artboardNames);
