@@ -174,16 +174,25 @@ makeRive('canvas-loop', () => {
 // GSAP adds a spring bounce on the button itself.
 // ─────────────────────────────────────────────────────────────────────────────
 makeRive('canvas-click', (r, vmi) => {
-  const inputs       = r.stateMachineInputs(STATE_MACHINE);
-  const clickTrigger = inputs?.find(i => i.name === PROP_CLICK) ?? null;
-  if (!clickTrigger) console.warn(`[Rive D] trigger "${PROP_CLICK}" not found — available inputs:`, inputs?.map(i => i.name));
+  const clickTrigger = vmi?.trigger?.(PROP_CLICK) ?? null;
+  if (clickTrigger) {
+    const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(clickTrigger));
+    console.log('[Rive D] trigger object methods:', methods);
+  } else {
+    console.warn('[Rive D] vmi.trigger("' + PROP_CLICK + '") returned null');
+  }
 
   const btn      = document.getElementById('action-btn');
   const statusEl = document.getElementById('status-click');
   let tl         = null;
 
   btn.addEventListener('click', () => {
-    if (clickTrigger) clickTrigger.fire();
+    if (clickTrigger) {
+      if (typeof clickTrigger.fire     === 'function') clickTrigger.fire();
+      else if (typeof clickTrigger.trigger  === 'function') clickTrigger.trigger();
+      else if (typeof clickTrigger.activate === 'function') clickTrigger.activate();
+      else console.warn('[Rive D] no known fire method on trigger object — methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(clickTrigger)));
+    }
 
     if (tl) tl.kill();
     tl = gsap.timeline()
