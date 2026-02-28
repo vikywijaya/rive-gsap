@@ -18,22 +18,49 @@ const PROP_HOVER  = 'Hover';     // boolean  in "Animation A"
 const PROP_SCROLL = 'Progress';  // number   in "Animation B"  (range 0 – 100)
 const PROP_CLICK  = 'Click';     // boolean  in "Animation D"  (momentary pulse)
 
-// ── Diagnostic: log real artboard names from the file ────────────────────────
-async function logArtboardNames() {
+// ── Diagnostic: log artboard names + ViewModel properties from the file ──────
+async function logFileInfo() {
   try {
     const runtime = await rive.RuntimeLoader.awaitInstance();
     const buf     = await fetch(RIV_SRC).then(r => r.arrayBuffer());
     const file    = runtime.load(new Uint8Array(buf));
-    const names   = Array.from({ length: file.artboardCount() }, (_, i) => file.artboardByIndex(i).name);
-    console.log('%c[Rive] Artboards in file:', 'color:#7c6dfa;font-weight:bold', names);
-    const missing = Object.values(ARTBOARD_MAP).filter(n => !names.includes(n));
-    if (missing.length) console.warn('[Rive] ARTBOARD_MAP names not found:', missing);
-    else console.log('%c[Rive] All artboard names match ✓', 'color:#4ade80');
+
+    // Artboard names
+    const artboardNames = Array.from(
+      { length: file.artboardCount() },
+      (_, i) => file.artboardByIndex(i).name
+    );
+    console.log('%c[Rive] Artboards:', 'color:#7c6dfa;font-weight:bold', artboardNames);
+    const missing = Object.values(ARTBOARD_MAP).filter(n => !artboardNames.includes(n));
+    if (missing.length) console.warn('[Rive] ARTBOARD_MAP names not found in file:', missing);
+
+    // ViewModel properties — enumerate every artboard's default ViewModel
+    for (const abName of Object.values(ARTBOARD_MAP)) {
+      try {
+        const ab = file.artboardByName(abName);
+        const vm = ab?.defaultViewModel?.() ?? ab?.viewModel?.();
+        if (!vm) { console.warn(`[Rive] "${abName}" — no default ViewModel found`); continue; }
+
+        const count = typeof vm.propertyCount === 'function'
+          ? vm.propertyCount()
+          : vm.propertyCount ?? 0;
+
+        const props = [];
+        for (let i = 0; i < count; i++) {
+          const name = vm.propertyName(i);
+          const type = vm.propertyType?.(i);
+          props.push(type != null ? `${name} (type:${type})` : name);
+        }
+        console.log(`%c[Rive] "${abName}" ViewModel properties:`, 'color:#4ade80', props);
+      } catch (e) {
+        console.warn(`[Rive] "${abName}" — could not enumerate ViewModel properties:`, e.message);
+      }
+    }
   } catch (e) {
-    console.warn('[Rive] Could not inspect artboards:', e.message);
+    console.warn('[Rive] Diagnostic failed:', e.message);
   }
 }
-logArtboardNames();
+logFileInfo();
 
 // ── Core loader ───────────────────────────────────────────────────────────────
 // autoBind: true  activates data binding and exposes r.viewModelInstance
@@ -55,9 +82,18 @@ function makeRive(canvasId, onReady) {
 
       console.group(`[Rive] "${artboard}"`);
       if (vmi) {
-        console.log('✓ viewModelInstance found — expand to see all properties:', vmi);
+        console.log('✓ viewModelInstance:', vmi);
+        // Attempt to list all properties by trying names from the raw ViewModel
+        try {
+          const vm   = vmi.viewModel ?? vmi._viewModel ?? vmi.model;
+          const cnt  = typeof vm?.propertyCount === 'function' ? vm.propertyCount() : vm?.propertyCount;
+          if (cnt != null) {
+            const list = Array.from({ length: cnt }, (_, i) => vm.propertyName(i));
+            console.log('  property names:', list);
+          }
+        } catch (_) { /* silent — logFileInfo handles this more thoroughly */ }
       } else {
-        console.warn('✗ viewModelInstance is null — make sure this artboard has a default ViewModel set up in Rive Studio');
+        console.warn('✗ viewModelInstance is null');
       }
       console.groupEnd();
 
