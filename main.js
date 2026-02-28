@@ -1,6 +1,7 @@
 gsap.registerPlugin(ScrollTrigger);
 
-const RIV_SRC = 'animation.riv';
+const RIV_SRC      = 'animation.riv';
+const STATE_MACHINE = 'State Machine 1';  // same name in every artboard
 
 // ── Update these to match your exact artboard names (check console on load) ──
 const ARTBOARD_MAP = {
@@ -34,41 +35,25 @@ async function logArtboardNames() {
 logArtboardNames();
 
 // ─── Core loader ──────────────────────────────────────────
-// Auto-detects the state machine inside each artboard so we
-// don't need to hard-code names. Opens a console group so
-// you can see exactly what was found in each artboard.
 function makeRive(canvasId, onReady) {
-  const canvas  = document.getElementById(canvasId);
+  const canvas   = document.getElementById(canvasId);
   const artboard = ARTBOARD_MAP[canvasId];
 
   const r = new rive.Rive({
     src: RIV_SRC,
     canvas,
     artboard,
+    stateMachines: STATE_MACHINE,   // must be in constructor for inputs to work
     autoplay: true,
     onLoad() {
       r.resizeDrawingSurfaceToCanvas();
-
-      const smNames = r.stateMachineNames ?? [];
+      const inputs = r.stateMachineInputs(STATE_MACHINE) ?? [];
       console.group(`[Rive] "${artboard}"`);
-      console.log('State machines:', smNames.length ? smNames : '(none)');
-
-      let inputs = [];
-
-      if (smNames.length > 0) {
-        const smName = smNames[0];
-        r.play(smName);                               // start the state machine
-        inputs = r.stateMachineInputs(smName) ?? [];
-        console.log(
-          'Inputs:',
-          inputs.map(i => {
-            if (typeof i.fire === 'function') return `${i.name} [Trigger]`;
-            if (typeof i.value === 'boolean') return `${i.name} [Boolean]`;
-            return `${i.name} [Number]`;
-          })
-        );
-      }
-
+      console.log('Inputs:', inputs.map(i => {
+        if (typeof i.fire === 'function') return `${i.name} [Trigger]`;
+        if (typeof i.value === 'boolean') return `${i.name} [Boolean]`;
+        return `${i.name} [Number]`;
+      }));
       console.groupEnd();
       onReady(r, inputs, canvas);
     },
