@@ -14,9 +14,9 @@ const ARTBOARD_MAP = {
 // ── ViewModel property names — update to match your Rive data binding setup ───
 // Data binding property types: boolean / number / string / color / image
 // (there is no "trigger" type — use a boolean that the state machine resets)
-const PROP_HOVER  = 'Hover';     // boolean  in "Animation A"
-const PROP_SCROLL = 'Progress';  // number   in "Animation B"  (range 0 – 100)
-const PROP_CLICK  = 'Click';     // boolean  in "Animation D"  (momentary pulse)
+const PROP_HOVER  = 'isHovered';      // boolean  in "Animation A"
+const PROP_SCROLL = 'scrollProgress'; // number   in "Animation B"  (range 0 – 100)
+const PROP_CLICK  = 'onClick';        // boolean  in "Animation D"  (momentary pulse)
 
 // ── Diagnostic: log artboard names + ViewModel properties from the file ──────
 async function logFileInfo() {
