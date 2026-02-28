@@ -3,7 +3,6 @@ gsap.registerPlugin(ScrollTrigger);
 const RIV_SRC       = 'animation.riv';
 const STATE_MACHINE = 'State Machine 1';
 
-// ── Artboard names — must match exactly what is in the .riv file ──────────────
 const ARTBOARD_MAP = {
   'canvas-hover':  'Animation A',
   'canvas-scroll': 'Animation B',
@@ -11,69 +10,10 @@ const ARTBOARD_MAP = {
   'canvas-click':  'Animation D',
 };
 
-// ── ViewModel property names — update to match your Rive data binding setup ───
-// Data binding property types: boolean / number / string / color / trigger / image
-const PROP_HOVER  = 'isHovered';      // boolean  in "Animation A"
-const PROP_SCROLL = 'scrollProgress'; // number   in "Animation B"  (range 0 – 100)
-const PROP_CLICK  = 'onClick';        // trigger  in "Animation D"
+const PROP_HOVER  = 'isHovered';      // boolean
+const PROP_SCROLL = 'scrollProgress'; // number  (0 – 100)
+const PROP_CLICK  = 'onClick';        // trigger
 
-// ── Diagnostic: log artboard names + ViewModel properties from the file ──────
-async function logFileInfo() {
-  try {
-    const runtime = await rive.RuntimeLoader.awaitInstance();
-    const buf     = await fetch(RIV_SRC).then(r => r.arrayBuffer());
-    const file    = runtime.load(new Uint8Array(buf));
-
-    // Artboard names
-    const abCount = typeof file.artboardCount === 'function' ? file.artboardCount() : file.artboardCount;
-    const artboardNames = Array.from(
-      { length: abCount },
-      (_, i) => file.artboardByIndex(i).name
-    );
-    console.log('%c[Rive] Artboards:', 'color:#7c6dfa;font-weight:bold', artboardNames);
-    const missing = Object.values(ARTBOARD_MAP).filter(n => !artboardNames.includes(n));
-    if (missing.length) console.warn('[Rive] ARTBOARD_MAP names not found in file:', missing);
-
-    // ViewModel properties — enumerate every artboard's default ViewModel
-    for (const abName of Object.values(ARTBOARD_MAP)) {
-      try {
-        // artboardByName is not available in all WASM builds; fall back to artboard() or index scan
-        let ab;
-        if (typeof file.artboardByName === 'function') {
-          ab = file.artboardByName(abName);
-        } else if (typeof file.artboard === 'function') {
-          ab = file.artboard(abName);
-        } else {
-          ab = Array.from({ length: abCount }, (_, i) => file.artboardByIndex(i))
-                    .find(a => a.name === abName) ?? null;
-        }
-        const vm = ab?.defaultViewModel?.() ?? ab?.viewModel?.();
-        if (!vm) { console.warn(`[Rive] "${abName}" — no default ViewModel found`); continue; }
-
-        const count = typeof vm.propertyCount === 'function'
-          ? vm.propertyCount()
-          : vm.propertyCount ?? 0;
-
-        const props = [];
-        for (let i = 0; i < count; i++) {
-          const name = vm.propertyName(i);
-          const type = vm.propertyType?.(i);
-          props.push(type != null ? `${name} (type:${type})` : name);
-        }
-        console.log(`%c[Rive] "${abName}" ViewModel properties:`, 'color:#4ade80', props);
-      } catch (e) {
-        console.warn(`[Rive] "${abName}" — could not enumerate ViewModel properties:`, e.message);
-      }
-    }
-  } catch (e) {
-    console.warn('[Rive] Diagnostic failed:', e.message);
-  }
-}
-logFileInfo();
-
-// ── Core loader ───────────────────────────────────────────────────────────────
-// autoBind: true  activates data binding and exposes r.viewModelInstance
-// stateMachines   still required so the state machine runs alongside bindings
 function makeRive(canvasId, onReady) {
   const canvas   = document.getElementById(canvasId);
   const artboard = ARTBOARD_MAP[canvasId];
@@ -87,51 +27,28 @@ function makeRive(canvasId, onReady) {
     autoplay: true,
     onLoad() {
       r.resizeDrawingSurfaceToCanvas();
-      const vmi = r.viewModelInstance;
-
-      console.group(`[Rive] "${artboard}"`);
-      if (vmi) {
-        console.log('✓ viewModelInstance:', vmi);
-        // Attempt to list all properties by trying names from the raw ViewModel
-        try {
-          const vm   = vmi.viewModel ?? vmi._viewModel ?? vmi.model;
-          const cnt  = typeof vm?.propertyCount === 'function' ? vm.propertyCount() : vm?.propertyCount;
-          if (cnt != null) {
-            const list = Array.from({ length: cnt }, (_, i) => vm.propertyName(i));
-            console.log('  property names:', list);
-          }
-        } catch (_) { /* silent — logFileInfo handles this more thoroughly */ }
-      } else {
-        console.warn('✗ viewModelInstance is null');
-      }
-      console.groupEnd();
-
-      onReady(r, vmi, canvas);
+      onReady(r, r.viewModelInstance, canvas);
     },
   });
 }
 
-// Safe property getter — returns null and warns if the name is wrong
+// Safe property getter — warns if the name is wrong
 function prop(vmi, type, name) {
   try {
     const p = vmi?.[type]?.(name) ?? null;
-    if (!p) console.warn(`[Rive] "${type}('${name}')" returned null — update the matching PROP_ constant in main.js`);
+    if (!p) console.warn(`[Rive] ${type}('${name}') returned null — check the PROP_ constant`);
     return p;
   } catch (e) {
-    console.warn(`[Rive] "${type}('${name}')" threw:`, e.message);
+    console.warn(`[Rive] ${type}('${name}') threw:`, e.message);
     return null;
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// A — HOVER  (artboard: "Animation A")
-// Sets the boolean property to true on mouseenter, false on mouseleave.
-// ─────────────────────────────────────────────────────────────────────────────
+// ── A — HOVER ─────────────────────────────────────────────────────────────────
 makeRive('canvas-hover', (r, vmi) => {
   const hoverProp = prop(vmi, 'boolean', PROP_HOVER);
-
-  const zone     = document.getElementById('hover-zone');
-  const statusEl = document.getElementById('status-hover');
+  const zone      = document.getElementById('hover-zone');
+  const statusEl  = document.getElementById('status-hover');
 
   zone.addEventListener('mouseenter', () => {
     if (hoverProp) hoverProp.value = true;
@@ -146,10 +63,7 @@ makeRive('canvas-hover', (r, vmi) => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// B — SCROLL  (artboard: "Animation B")
-// GSAP ScrollTrigger drives the number property 0 → 100 as you scroll.
-// ─────────────────────────────────────────────────────────────────────────────
+// ── B — SCROLL ────────────────────────────────────────────────────────────────
 makeRive('canvas-scroll', (r, vmi) => {
   const scrollProp = prop(vmi, 'number', PROP_SCROLL);
   const statusEl   = document.getElementById('status-scroll');
@@ -168,40 +82,21 @@ makeRive('canvas-scroll', (r, vmi) => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// C — LOOP  (artboard: "Animation C")
-// Runs automatically — no property interaction needed.
-// ─────────────────────────────────────────────────────────────────────────────
-makeRive('canvas-loop', () => {
-  // intentionally empty — the loop state handles itself
-});
+// ── C — LOOP ──────────────────────────────────────────────────────────────────
+makeRive('canvas-loop', () => {});
 
-// ─────────────────────────────────────────────────────────────────────────────
-// D — BUTTON CLICK  (artboard: "Animation D")
-// onClick is a trigger — retrieve it via stateMachineInputs() and call .fire().
-// The VMI trigger property has no .fire() in the JS runtime; the state machine
-// input API is the correct way to fire triggers from JS.
-// GSAP adds a spring bounce on the button itself.
-// ─────────────────────────────────────────────────────────────────────────────
+// ── D — CLICK ─────────────────────────────────────────────────────────────────
 makeRive('canvas-click', (r, vmi) => {
   const clickTrigger = vmi?.trigger?.(PROP_CLICK) ?? null;
-  if (clickTrigger) {
-    const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(clickTrigger));
-    console.log('[Rive D] trigger object methods:', methods);
-  } else {
-    console.warn('[Rive D] vmi.trigger("' + PROP_CLICK + '") returned null');
-  }
-
-  const btn      = document.getElementById('action-btn');
-  const statusEl = document.getElementById('status-click');
-  let tl         = null;
+  const btn          = document.getElementById('action-btn');
+  const statusEl     = document.getElementById('status-click');
+  let tl             = null;
 
   btn.addEventListener('click', () => {
     if (clickTrigger) {
-      if (typeof clickTrigger.fire     === 'function') clickTrigger.fire();
+      if      (typeof clickTrigger.fire     === 'function') clickTrigger.fire();
       else if (typeof clickTrigger.trigger  === 'function') clickTrigger.trigger();
       else if (typeof clickTrigger.activate === 'function') clickTrigger.activate();
-      else console.warn('[Rive D] no known fire method on trigger object — methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(clickTrigger)));
     }
 
     if (tl) tl.kill();
