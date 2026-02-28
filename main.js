@@ -37,7 +37,16 @@ async function logFileInfo() {
     // ViewModel properties — enumerate every artboard's default ViewModel
     for (const abName of Object.values(ARTBOARD_MAP)) {
       try {
-        const ab = file.artboardByName(abName);
+        // artboardByName is not available in all WASM builds; fall back to artboard() or index scan
+        let ab;
+        if (typeof file.artboardByName === 'function') {
+          ab = file.artboardByName(abName);
+        } else if (typeof file.artboard === 'function') {
+          ab = file.artboard(abName);
+        } else {
+          ab = Array.from({ length: abCount }, (_, i) => file.artboardByIndex(i))
+                    .find(a => a.name === abName) ?? null;
+        }
         const vm = ab?.defaultViewModel?.() ?? ab?.viewModel?.();
         if (!vm) { console.warn(`[Rive] "${abName}" — no default ViewModel found`); continue; }
 
