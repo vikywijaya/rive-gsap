@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rive + GSAP Demo</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── HERO ─────────────────────────────────────────────── -->
+  <section class="hero">
+    <h1>Rive × GSAP</h1>
+    <p class="subtitle">Four ways to control animations</p>
+  </section>
+
+  <!-- ── A: HOVER ──────────────────────────────────────────── -->
+  <section class="demo-block" id="block-hover">
+    <div class="demo-info">
+      <span class="label">A</span>
+      <h2>Hover</h2>
+      <p>Move your cursor over the canvas to trigger the hover animation.</p>
+      <div class="status" id="status-hover">idle</div>
+    </div>
+    <div class="canvas-wrap" id="hover-zone">
+      <canvas id="canvas-hover" width="400" height="400"></canvas>
+      <div class="overlay-hint">Hover me</div>
+    </div>
+  </section>
+
+  <!-- ── B: SCROLL ─────────────────────────────────────────── -->
+  <section class="demo-block" id="block-scroll">
+    <div class="demo-info">
+      <span class="label">B</span>
+      <h2>Scroll</h2>
+      <p>The animation plays as you scroll through this section. GSAP ScrollTrigger drives the <code>scrollProgress</code> input (0 → 100).</p>
+      <div class="status" id="status-scroll">0%</div>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="canvas-scroll" width="400" height="400"></canvas>
+    </div>
+  </section>
+
+  <!-- ── C: LOOP ───────────────────────────────────────────── -->
+  <section class="demo-block" id="block-loop">
+    <div class="demo-info">
+      <span class="label">C</span>
+      <h2>Loop</h2>
+      <p>This animation runs continuously. Set the state as a looping state inside the Rive state machine — no external trigger needed.</p>
+      <div class="status" id="status-loop">playing ∞</div>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="canvas-loop" width="400" height="400"></canvas>
+    </div>
+  </section>
+
+  <!-- ── D: CLICK ──────────────────────────────────────────── -->
+  <section class="demo-block" id="block-click">
+    <div class="demo-info">
+      <span class="label">D</span>
+      <h2>Button Click</h2>
+      <p>Press the button to fire the <code>onClick</code> trigger input and play animation D.</p>
+      <button id="action-btn">Fire animation D</button>
+      <div class="status" id="status-click">waiting</div>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="canvas-click" width="400" height="400"></canvas>
+    </div>
+  </section>
+
+  <!-- ── HOW TO SET UP YOUR RIVE FILE ─────────────────────── -->
+  <section class="guide">
+    <h2>How to set up the Rive file</h2>
+    <p>Create a single state machine called <strong>Main</strong> and add these inputs:</p>
+    <table>
+      <thead>
+        <tr><th>Input name</th><th>Type</th><th>Used for</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>isHovered</code></td><td>Boolean</td><td>Animation A — hover</td></tr>
+        <tr><td><code>scrollProgress</code></td><td>Number (0–100)</td><td>Animation B — scroll</td></tr>
+        <tr><td>—</td><td>Loop state</td><td>Animation C — auto-loop</td></tr>
+        <tr><td><code>onClick</code></td><td>Trigger</td><td>Animation D — button</td></tr>
+      </tbody>
+    </table>
+    <p>Then export the file as <strong>animation.riv</strong> and place it next to <code>index.html</code>.</p>
+  </section>
+
+  <!-- scripts -->
+  <script src="https://unpkg.com/@rive-app/canvas@2.21.6/rive.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+/* ── Reset & base ────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0d0d0f;
+  --surface:   #16161a;
+  --border:    #2a2a35;
+  --accent:    #7c6dfa;
+  --accent2:   #fa6d9a;
+  --text:      #e4e4f0;
+  --muted:     #777790;
+  --radius:    16px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* ── Hero ────────────────────────────────────────────────── */
+.hero {
+  min-height: 40vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  background: radial-gradient(ellipse at 50% 0%, #1c1440 0%, var(--bg) 70%);
+  border-bottom: 1px solid var(--border);
+}
+
+.hero h1 {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #c4baff 0%, var(--accent) 50%, var(--accent2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+/* ── Demo blocks ─────────────────────────────────────────── */
+.demo-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 6rem 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* alternate sides */
+.demo-block:nth-child(odd) .canvas-wrap { order: -1; }
+
+.demo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.demo-info h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.demo-info p {
+  color: var(--muted);
+  font-size: 1rem;
+  max-width: 42ch;
+}
+
+code {
+  background: var(--border);
+  color: #c4baff;
+  padding: 0.15em 0.45em;
+  border-radius: 5px;
+  font-size: 0.9em;
+  font-family: 'Fira Code', monospace;
+}
+
+/* ── Status badge ────────────────────────────────────────── */
+.status {
+  display: inline-block;
+  padding: 0.3rem 0.9rem;
+  border-radius: 100px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-family: monospace;
+  width: fit-content;
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+.status.active {
+  background: #1a1040;
+  border-color: var(--accent);
+  color: #c4baff;
+}
+
+/* ── Button ──────────────────────────────────────────────── */
+#action-btn {
+  padding: 0.8rem 2rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  width: fit-content;
+}
+#action-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px #7c6dfa55; }
+#action-btn:active { transform: scale(0.97); }
+
+/* ── Canvas wrap ─────────────────────────────────────────── */
+.canvas-wrap {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 420px;
+  width: 100%;
+}
+
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.overlay-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s;
+}
+#hover-zone:hover .overlay-hint { opacity: 0; }
+
+/* ── Hover zone glow ─────────────────────────────────────── */
+#hover-zone {
+  cursor: crosshair;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+#hover-zone:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 40px #7c6dfa33;
+}
+
+/* ── Guide table ─────────────────────────────────────────── */
+.guide {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 5rem 2rem 8rem;
+}
+
+.guide h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+}
+
+.guide p {
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+th, td {
+  padding: 0.9rem 1.2rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+
+th {
+  background: #1e1e28;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+}
+
+tr:last-child td { border-bottom: none; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .demo-block {
+    grid-template-columns: 1fr;
+    padding: 4rem 1.5rem;
+  }
+  .demo-block:nth-child(odd) .canvas-wrap { order: 0; }
+}
