@@ -168,18 +168,24 @@ makeRive('canvas-loop', () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // D — BUTTON CLICK  (artboard: "Animation D")
-// onClick is a trigger — call .fire() to pulse it once.
+// onClick is a trigger — retrieve it via stateMachineInputs() and call .fire().
+// The VMI trigger property has no .fire() in the JS runtime; the state machine
+// input API is the correct way to fire triggers from JS.
 // GSAP adds a spring bounce on the button itself.
 // ─────────────────────────────────────────────────────────────────────────────
 makeRive('canvas-click', (r, vmi) => {
-  const clickProp = prop(vmi, 'trigger', PROP_CLICK);
+  const inputs       = r.stateMachineInputs(STATE_MACHINE);
+  const clickTrigger = inputs?.find(
+    i => i.type === rive.StateMachineInputType.Trigger && i.name === PROP_CLICK
+  ) ?? null;
+  if (!clickTrigger) console.warn(`[Rive D] trigger input "${PROP_CLICK}" not found in state machine inputs`);
 
   const btn      = document.getElementById('action-btn');
   const statusEl = document.getElementById('status-click');
   let tl         = null;
 
   btn.addEventListener('click', () => {
-    if (clickProp) clickProp.fire();
+    if (clickTrigger) clickTrigger.fire();
 
     if (tl) tl.kill();
     tl = gsap.timeline()
