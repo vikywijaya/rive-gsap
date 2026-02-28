@@ -1,88 +1,101 @@
-/**
- * Rive + GSAP integration demo
- *
- * Prerequisites — your Rive file needs one state machine called "Main"
- * with these inputs:
- *
- *   isHovered     Boolean   → Animation A (hover)
- *   scrollProgress Number   → Animation B (scroll, range 0–100)
- *   onClick       Trigger   → Animation D (button click)
- *
- * Animation C is a looping state inside the state machine; no input needed.
- *
- * Place your exported file as  animation.riv  next to index.html.
- */
-
 gsap.registerPlugin(ScrollTrigger);
 
-// ─── Shared config ────────────────────────────────────────
-const RIV_SRC        = 'animation.riv';   // ← your file here
-const STATE_MACHINE  = 'Main';            // ← your state machine name
+const RIV_SRC = 'animation.riv';
 
-// ─── Helper: build a Rive instance on a canvas ───────────
+// Each canvas loads its own artboard from the .riv file
+const ARTBOARD_MAP = {
+  'canvas-hover':  'Animation A',
+  'canvas-scroll': 'Animation B',
+  'canvas-loop':   'Animation C',
+  'canvas-click':  'Animation D',
+};
+
+// ─── Core loader ──────────────────────────────────────────
+// Auto-detects the state machine inside each artboard so we
+// don't need to hard-code names. Opens a console group so
+// you can see exactly what was found in each artboard.
 function makeRive(canvasId, onReady) {
-  const canvas = document.getElementById(canvasId);
+  const canvas  = document.getElementById(canvasId);
+  const artboard = ARTBOARD_MAP[canvasId];
+
   const r = new rive.Rive({
     src: RIV_SRC,
     canvas,
+    artboard,
     autoplay: true,
-    stateMachines: STATE_MACHINE,
     onLoad() {
       r.resizeDrawingSurfaceToCanvas();
-      const inputs = r.stateMachineInputs(STATE_MACHINE);
+
+      const smNames = r.stateMachineNames ?? [];
+      console.group(`[Rive] "${artboard}"`);
+      console.log('State machines:', smNames.length ? smNames : '(none)');
+
+      let inputs = [];
+
+      if (smNames.length > 0) {
+        const smName = smNames[0];
+        r.play(smName);                               // start the state machine
+        inputs = r.stateMachineInputs(smName) ?? [];
+        console.log(
+          'Inputs:',
+          inputs.map(i => {
+            if (typeof i.fire === 'function') return `${i.name} [Trigger]`;
+            if (typeof i.value === 'boolean') return `${i.name} [Boolean]`;
+            return `${i.name} [Number]`;
+          })
+        );
+      }
+
+      console.groupEnd();
       onReady(r, inputs, canvas);
     },
   });
-  return r;
 }
 
-// ─── Helper: find a state machine input by name ───────────
-function findInput(inputs, name) {
-  return inputs?.find(i => i.name === name) ?? null;
-}
+// Duck-type helpers — work regardless of what the inputs are named
+const boolInput    = (inputs) => inputs.find(i => typeof i.fire !== 'function' && typeof i.value === 'boolean') ?? null;
+const numInput     = (inputs) => inputs.find(i => typeof i.fire !== 'function' && typeof i.value === 'number')  ?? null;
+const triggerInput = (inputs) => inputs.find(i => typeof i.fire === 'function') ?? null;
 
 // ─────────────────────────────────────────────────────────
-// A — HOVER
-// Sets the Boolean input "isHovered" true/false on mouseenter/mouseleave.
-// In the state machine: create a transition triggered by isHovered == true
-// leading to Animation A's state.
+// A — HOVER  (artboard: "Animation A")
+// Flips the first Boolean input true on mouseenter, false on mouseleave.
 // ─────────────────────────────────────────────────────────
 makeRive('canvas-hover', (r, inputs, canvas) => {
-  const isHovered = findInput(inputs, 'isHovered');
+  const hoverBool = boolInput(inputs);
   const statusEl  = document.getElementById('status-hover');
   const zone      = document.getElementById('hover-zone');
 
   zone.addEventListener('mouseenter', () => {
-    if (isHovered) isHovered.value = true;
+    if (hoverBool) hoverBool.value = true;
     statusEl.textContent = 'hovered — animating A';
     statusEl.classList.add('active');
   });
 
   zone.addEventListener('mouseleave', () => {
-    if (isHovered) isHovered.value = false;
+    if (hoverBool) hoverBool.value = false;
     statusEl.textContent = 'idle';
     statusEl.classList.remove('active');
   });
 });
 
 // ─────────────────────────────────────────────────────────
-// B — SCROLL
-// GSAP ScrollTrigger maps scroll progress (0–1) to the Number input
-// "scrollProgress" (0–100). In the state machine: create a blend state
-// or a motion path driven by this number.
+// B — SCROLL  (artboard: "Animation B")
+// GSAP ScrollTrigger drives the first Number input from 0 → 100
+// as the section scrolls through the viewport.
 // ─────────────────────────────────────────────────────────
 makeRive('canvas-scroll', (r, inputs) => {
-  const scrollProgress = findInput(inputs, 'scrollProgress');
-  const statusEl       = document.getElementById('status-scroll');
+  const scrollNum = numInput(inputs);
+  const statusEl  = document.getElementById('status-scroll');
 
   ScrollTrigger.create({
     trigger: '#block-scroll',
     start: 'top 80%',
     end: 'bottom 20%',
-    scrub: true,                 // ties animation to scroll bar
+    scrub: true,
     onUpdate(self) {
       const pct = Math.round(self.progress * 100);
-      if (scrollProgress) scrollProgress.value = pct;
+      if (scrollNum) scrollNum.value = pct;
       statusEl.textContent = `${pct}%`;
       statusEl.classList.toggle('active', pct > 0 && pct < 100);
     },
@@ -90,37 +103,33 @@ makeRive('canvas-scroll', (r, inputs) => {
 });
 
 // ─────────────────────────────────────────────────────────
-// C — LOOP
-// No external trigger. The state machine contains a looping state for
-// Animation C — it just plays automatically when the Rive instance loads.
+// C — LOOP  (artboard: "Animation C")
+// Nothing to wire — the looping state in the state machine
+// runs automatically once the artboard is loaded and played.
 // ─────────────────────────────────────────────────────────
-makeRive('canvas-loop', (_r, _inputs) => {
-  // nothing to wire up — the loop state handles itself
+makeRive('canvas-loop', () => {
+  // intentionally empty
 });
 
 // ─────────────────────────────────────────────────────────
-// D — BUTTON CLICK
-// Fires the Trigger input "onClick". In the state machine: connect a
-// transition from any state to Animation D using this trigger.
-// A GSAP timeline adds a short UI flourish on the button as well.
+// D — BUTTON CLICK  (artboard: "Animation D")
+// Fires the first Trigger input on button click.
+// GSAP adds a spring-bounce feedback on the button itself.
 // ─────────────────────────────────────────────────────────
 makeRive('canvas-click', (r, inputs) => {
-  const onClick  = findInput(inputs, 'onClick');
-  const btn      = document.getElementById('action-btn');
-  const statusEl = document.getElementById('status-click');
-  let tl         = null;
+  const clickTrigger = triggerInput(inputs);
+  const btn          = document.getElementById('action-btn');
+  const statusEl     = document.getElementById('status-click');
+  let tl             = null;
 
   btn.addEventListener('click', () => {
-    // Fire the Rive trigger
-    if (onClick) onClick.fire();
+    if (clickTrigger) clickTrigger.fire();
 
-    // GSAP button feedback
     if (tl) tl.kill();
     tl = gsap.timeline()
       .to(btn, { scale: 0.94, duration: 0.08, ease: 'power2.in' })
       .to(btn, { scale: 1,    duration: 0.4,  ease: 'elastic.out(1, 0.4)' });
 
-    // Status label
     statusEl.textContent = 'fired! animating D…';
     statusEl.classList.add('active');
     gsap.delayedCall(2, () => {

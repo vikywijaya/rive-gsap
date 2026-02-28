@@ -71,19 +71,19 @@
   <!-- ── HOW TO SET UP YOUR RIVE FILE ─────────────────────── -->
   <section class="guide">
     <h2>How to set up the Rive file</h2>
-    <p>Create a single state machine called <strong>Main</strong> and add these inputs:</p>
+    <p>Each artboard needs one state machine. The JS auto-detects inputs by <em>type</em> — names don't matter:</p>
     <table>
       <thead>
-        <tr><th>Input name</th><th>Type</th><th>Used for</th></tr>
+        <tr><th>Artboard</th><th>Input type needed</th><th>Triggered by</th></tr>
       </thead>
       <tbody>
-        <tr><td><code>isHovered</code></td><td>Boolean</td><td>Animation A — hover</td></tr>
-        <tr><td><code>scrollProgress</code></td><td>Number (0–100)</td><td>Animation B — scroll</td></tr>
-        <tr><td>—</td><td>Loop state</td><td>Animation C — auto-loop</td></tr>
-        <tr><td><code>onClick</code></td><td>Trigger</td><td>Animation D — button</td></tr>
+        <tr><td><code>Animation A</code></td><td>Boolean</td><td>Mouse hover</td></tr>
+        <tr><td><code>Animation B</code></td><td>Number (0–100)</td><td>Scroll position</td></tr>
+        <tr><td><code>Animation C</code></td><td>Loop state (no input)</td><td>Auto-plays on load</td></tr>
+        <tr><td><code>Animation D</code></td><td>Trigger</td><td>Button click</td></tr>
       </tbody>
     </table>
-    <p>Then export the file as <strong>animation.riv</strong> and place it next to <code>index.html</code>.</p>
+    <p>Open your browser console (<kbd>F12</kbd>) to see which state machines and inputs were detected for each artboard.</p>
   </section>
 
   <!-- scripts -->
