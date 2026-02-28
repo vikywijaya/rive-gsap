@@ -12,11 +12,10 @@ const ARTBOARD_MAP = {
 };
 
 // ── ViewModel property names — update to match your Rive data binding setup ───
-// Data binding property types: boolean / number / string / color / image
-// (there is no "trigger" type — use a boolean that the state machine resets)
+// Data binding property types: boolean / number / string / color / trigger / image
 const PROP_HOVER  = 'isHovered';      // boolean  in "Animation A"
 const PROP_SCROLL = 'scrollProgress'; // number   in "Animation B"  (range 0 – 100)
-const PROP_CLICK  = 'onClick';        // boolean  in "Animation D"  (momentary pulse)
+const PROP_CLICK  = 'onClick';        // trigger  in "Animation D"
 
 // ── Diagnostic: log artboard names + ViewModel properties from the file ──────
 async function logFileInfo() {
@@ -169,23 +168,18 @@ makeRive('canvas-loop', () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // D — BUTTON CLICK  (artboard: "Animation D")
-// Data binding has no trigger type — use a momentary boolean pulse instead.
-// Set it true, let the state machine transition, then reset to false.
+// onClick is a trigger — call .fire() to pulse it once.
 // GSAP adds a spring bounce on the button itself.
 // ─────────────────────────────────────────────────────────────────────────────
 makeRive('canvas-click', (r, vmi) => {
-  const clickProp = prop(vmi, 'boolean', PROP_CLICK);
+  const clickProp = prop(vmi, 'trigger', PROP_CLICK);
 
   const btn      = document.getElementById('action-btn');
   const statusEl = document.getElementById('status-click');
   let tl         = null;
 
   btn.addEventListener('click', () => {
-    if (clickProp) {
-      clickProp.value = true;
-      // Reset after one frame so the state machine sees a rising edge
-      requestAnimationFrame(() => { clickProp.value = false; });
-    }
+    if (clickProp) clickProp.fire();
 
     if (tl) tl.kill();
     tl = gsap.timeline()
