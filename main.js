@@ -2,13 +2,36 @@ gsap.registerPlugin(ScrollTrigger);
 
 const RIV_SRC = 'animation.riv';
 
-// Each canvas loads its own artboard from the .riv file
+// ── Update these to match your exact artboard names (check console on load) ──
 const ARTBOARD_MAP = {
   'canvas-hover':  'Animation A',
   'canvas-scroll': 'Animation B',
   'canvas-loop':   'Animation C',
   'canvas-click':  'Animation D',
 };
+
+// ── Reads the .riv file and logs every artboard name it contains ──────────────
+// Open the browser console (F12) to see the real names, then update ARTBOARD_MAP
+async function logArtboardNames() {
+  try {
+    const runtime = await rive.RuntimeLoader.awaitInstance();
+    const buf     = await fetch(RIV_SRC).then(r => r.arrayBuffer());
+    const file    = runtime.load(new Uint8Array(buf));
+    const names   = Array.from({ length: file.artboardCount() }, (_, i) => file.artboardByIndex(i).name);
+    console.log('%c[Rive] Artboards in file:', 'color:#7c6dfa;font-weight:bold', names);
+    const mapped  = Object.values(ARTBOARD_MAP);
+    const missing = mapped.filter(n => !names.includes(n));
+    if (missing.length) {
+      console.warn('[Rive] These names in ARTBOARD_MAP were NOT found in the file:', missing);
+      console.warn('[Rive] → Open main.js and update ARTBOARD_MAP to use the names listed above');
+    } else {
+      console.log('%c[Rive] All artboard names match ✓', 'color:#4ade80');
+    }
+  } catch (e) {
+    console.warn('[Rive] Could not inspect artboards:', e.message);
+  }
+}
+logArtboardNames();
 
 // ─── Core loader ──────────────────────────────────────────
 // Auto-detects the state machine inside each artboard so we
