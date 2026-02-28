@@ -175,10 +175,8 @@ makeRive('canvas-loop', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 makeRive('canvas-click', (r, vmi) => {
   const inputs       = r.stateMachineInputs(STATE_MACHINE);
-  const clickTrigger = inputs?.find(
-    i => i.type === rive.StateMachineInputType.Trigger && i.name === PROP_CLICK
-  ) ?? null;
-  if (!clickTrigger) console.warn(`[Rive D] trigger input "${PROP_CLICK}" not found in state machine inputs`);
+  const clickTrigger = inputs?.find(i => i.name === PROP_CLICK) ?? null;
+  if (!clickTrigger) console.warn(`[Rive D] trigger "${PROP_CLICK}" not found — available inputs:`, inputs?.map(i => i.name));
 
   const btn      = document.getElementById('action-btn');
   const statusEl = document.getElementById('status-click');
